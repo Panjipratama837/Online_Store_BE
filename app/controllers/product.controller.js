@@ -1,7 +1,76 @@
 const db = require('../models');
 const product = db.product;
 
-// find with pagination
+exports.findAllProduct = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 5;
+        const search = req.query.search || '';
+        // let sort = req.query.sort || 'productName';
+        let category = req.query.category || 'all';
+
+        const categoryOptions = [
+            "t-shirt",
+            "shirt",
+            "pants",
+            "jacket",
+        ];
+
+        category === 'all'
+            ? category = [...categoryOptions]
+            : category = category.split(',');
+
+        const allProducts = await product.find({
+            productName: { $regex: search, $options: 'i' }
+        })
+            .where('category')
+            .in([...category])
+            .skip((page - 1) * size)
+            .limit(size * 1)
+
+        const total = await product.countDocuments({
+            category: { $in: [...category] },
+            productName: { $regex: search, $options: 'i' }
+        })
+
+        const newData = allProducts.map((item) => {
+            return {
+                id: item._id,
+                productName: item.productName,
+                category: item.category,
+                description: item.description,
+                price: item.price,
+                uploadPicture: item.uploadPicture,
+                size: item.size,
+                quantity: item.quantity,
+
+                // New Items
+                totalQuantity: item.quantity.map((item) => item[1]).reduce((a, b) => a + b)
+            }
+        })
+
+        res.send({
+            data: newData,
+            total,
+            page: Math.ceil(total / size),
+            size,
+            category: categoryOptions,
+            error: false
+
+        });
+
+
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            message: error.message || 'Some error occurred while retrieving posts.'
+        });
+
+    }
+
+}
+
 exports.findAllPagination = (req, res) => {
     const page = req.query.page;
     const size = req.query.size;
@@ -49,6 +118,9 @@ exports.findAllPagination = (req, res) => {
                 });
         })
 }
+
+
+
 
 // find without pagination
 
