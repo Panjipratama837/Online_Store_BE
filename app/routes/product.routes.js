@@ -3,8 +3,8 @@ module.exports = (app) => {
 
     const router = require('express').Router();
 
-    // router.get('/', products.findAllPagination);
-    router.get('/', products.findAll);
+    router.get('/', products.findAllPagination);
+    // router.get('/', products.findAll);
     router.post('/create', products.create);
     router.get('/detail/:id', products.findOne);
 

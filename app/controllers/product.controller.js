@@ -5,6 +5,9 @@ const product = db.product;
 exports.findAllPagination = (req, res) => {
     const page = req.query.page;
     const size = req.query.size;
+    const category = req.query.category;
+    const productName = req.query.productName;
+
 
     product.find()
         .countDocuments()
@@ -12,13 +15,31 @@ exports.findAllPagination = (req, res) => {
             const totalPage = Math.ceil(count / size);
             const skip = (page - 1) * size;
             product.find()
+                .where('category').equals(category === 'all' ? /.*/ : category)
+                // .where('productName').equals(productName === '' ? /.*/ : productName)
                 .skip(skip)
                 .limit(size * 1)
                 .then(result => {
+                    const newData = result.map((item) => {
+                        return {
+                            id: item._id,
+                            productName: item.productName,
+                            category: item.category,
+                            description: item.description,
+                            price: item.price,
+                            uploadPicture: item.uploadPicture,
+                            size: item.size,
+                            quantity: item.quantity,
+
+                            // New Items
+                            totalQuantity: item.quantity.map((item) => item[1]).reduce((a, b) => a + b)
+                        }
+                    })
+
                     res.send({
                         totalPage: totalPage,
-                        totalData: count,
-                        article: result
+                        totalData: category === 'all' ? count : result.length,
+                        data: newData
                     });
                 })
                 .catch(err => {
