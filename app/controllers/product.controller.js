@@ -6,8 +6,9 @@ exports.findAllProduct = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 5;
         const search = req.query.search || '';
-        // let sort = req.query.sort || 'productName';
+        let sort = req.query.sort || '';
         let category = req.query.category || 'all';
+        let price = req.query.price || 10000000;
 
         const categoryOptions = [
             "t-shirt",
@@ -20,18 +21,30 @@ exports.findAllProduct = async (req, res) => {
             ? category = [...categoryOptions]
             : category = category.split(',');
 
+        // sort === 'desc'
+        const persistProduct = await product.find();
+
         const allProducts = await product.find({
-            productName: { $regex: search, $options: 'i' }
+            category: { $in: [...category] },
+            productName: { $regex: search, $options: 'i' },
+            price: { $lte: price }
         })
-            .where('category')
-            .in([...category])
+            .sort(sort !== '' ? { description: sort } : { productName: 'asc' })
             .skip((page - 1) * size)
-            .limit(size * 1)
+            .limit(size * 1);
+
+
 
         const total = await product.countDocuments({
             category: { $in: [...category] },
-            productName: { $regex: search, $options: 'i' }
+            productName: { $regex: search, $options: 'i' },
+            price: { $lte: price }
         })
+
+
+
+        // console.log(persistProduct);
+
 
         const newData = allProducts.map((item) => {
             return {
@@ -44,6 +57,7 @@ exports.findAllProduct = async (req, res) => {
                 size: item.size,
                 quantity: item.quantity,
 
+
                 // New Items
                 totalQuantity: item.quantity.map((item) => item[1]).reduce((a, b) => a + b)
             }
@@ -51,6 +65,8 @@ exports.findAllProduct = async (req, res) => {
 
         res.send({
             data: newData,
+            maxPrice: Math.max(...persistProduct.map((item) => item.price)),
+            minPrice: Math.min(...persistProduct.map((item) => item.price)),
             total,
             page: Math.ceil(total / size),
             size,
