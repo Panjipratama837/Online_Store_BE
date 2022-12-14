@@ -7,6 +7,7 @@ exports.findAllProduct = async (req, res) => {
         const size = parseInt(req.query.size) || 5;
         const search = req.query.search || '';
         let sort = req.query.sort || '';
+        let sortQuantity = req.query.sortQuantity || '';
         let category = req.query.category || 'all';
         let price = req.query.price || 10000000;
 
@@ -29,7 +30,8 @@ exports.findAllProduct = async (req, res) => {
             productName: { $regex: search, $options: 'i' },
             price: { $lte: price }
         })
-            .sort(sort !== '' ? { description: sort } : { productName: 'asc' })
+            .sort((sort !== '') ? { totalQuantity: sort } : { updatedAt: 'desc' })
+
             .skip((page - 1) * size)
             .limit(size * 1);
 
@@ -46,25 +48,25 @@ exports.findAllProduct = async (req, res) => {
         // console.log(persistProduct);
 
 
-        const newData = allProducts.map((item) => {
-            return {
-                id: item._id,
-                productName: item.productName,
-                category: item.category,
-                description: item.description,
-                price: item.price,
-                uploadPicture: item.uploadPicture,
-                size: item.size,
-                quantity: item.quantity,
+        // const newData = allProducts.map((item) => {
+        //     return {
+        //         id: item._id,
+        //         productName: item.productName,
+        //         category: item.category,
+        //         description: item.description,
+        //         price: item.price,
+        //         uploadPicture: item.uploadPicture,
+        //         size: item.size,
+        //         quantity: item.quantity,
 
 
-                // New Items
-                totalQuantity: item.quantity.map((item) => item[1]).reduce((a, b) => a + b)
-            }
-        })
+        //         // New Items
+        //         totalQuantity: item.quantity.map((item) => item[1]).reduce((a, b) => a + b)
+        //     }
+        // })
 
         res.send({
-            data: newData,
+            data: allProducts,
             maxPrice: Math.max(...persistProduct.map((item) => item.price)),
             minPrice: Math.min(...persistProduct.map((item) => item.price)),
             total,
@@ -185,6 +187,7 @@ exports.create = (req, res) => {
         uploadPicture: req.body.uploadPicture,
         size: req.body.size,
         quantity: req.body.quantity,
+        totalQuantity: req.body.totalQuantity
     });
 
     newProduct.save(newProduct)

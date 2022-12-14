@@ -33,6 +33,11 @@ module.exports = (mongoose) => {
         size: {
             type: Array,
             required: true
+        },
+
+        totalQuantity: {
+            type: Number,
+            required: true
         }
 
 
