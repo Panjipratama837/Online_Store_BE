@@ -11,5 +11,6 @@ db.posts = require('./post.model')(mongoose);
 db.login = require('./login.model')(mongoose);
 db.biodata = require('./biodata.model')(mongoose);
 db.product = require('./product.model')(mongoose);
+db.category = require('./category.model')(mongoose)
 
 module.exports = db;
